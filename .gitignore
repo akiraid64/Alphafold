@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+
+# FoldX - PROPRIETARY SOFTWARE (cannot distribute)
+foldx_*.exe
+rotabase.txt
+
+# FoldX generated output
+*.fxout
+Dif_*.fxout
+individual_list.txt
+*_Repair.pdb
+
+# Standalone scripts (not part of the web app)
+alphamissencetest.py
+foldx_sickle_cell.py
+foldx_deletion_analysis.py
+pdb_to_fasta_mutations.py
+fasta_mutation_scanner.py
+test_alphamissense.py
+
+# Generated MSA environment (large, reproducible from ColabFold)
+test_b4a43_0/test_b4a43_0_env/
+
+# Video files
+*.mp4
+
+# Debug/log files
+debug_log.txt
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
+.DS_Store
+
+# Environment
+.env
+.env.local
+*.env
+
+# Jupyter checkpoints
+.ipynb_checkpoints/

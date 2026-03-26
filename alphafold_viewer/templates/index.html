@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlphaFold Structure Comparison</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Load Mol* (MolStar) -->
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.jsdelivr.net/npm/molstar@3.37.0/build/viewer/molstar.css" />
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/molstar@3.37.0/build/viewer/molstar.js"></script>
+    <style>
+        /* Mol* helper styles */
+        .structure-viewer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Access Screen -->
+    <div id="access-screen">
+        <div class="access-container">
+            <h1>AlphaFold Structure Comparison</h1>
+            <p>Compare your AlphaFold prediction with the healthy reference structure</p>
+
+            <div class="input-group">
+                <label for="folder-path-input">Gene-Test (Local Path)</label>
+                <input type="text" id="folder-path-input" placeholder="e.g. C:\Users\User\Desktop\Alphafold\test_job">
+            </div>
+
+            <div class="input-group">
+                <label>Gene ID (e.g., P35557):</label>
+                <input type="text" id="ref-gene-input" placeholder="Enter UniProt ID">
+            </div>
+            <div class="control-group">
+                <button id="analyze-btn">Analyze Structures</button>
+                <button id="show-mutations-btn" style="margin-left: 10px; background-color: #10b981;">Show
+                    Mutations</button>
+            </div>
+            <p class="error-msg" id="access-error"></p>
+            <p class="loading-msg hidden" id="loading-msg">🔍 Searching AlphaFold Database...</p>
+        </div>
+    </div>
+
+    <!-- Main Comparison Layout (Hidden by default) -->
+    <div id="main-layout" class="hidden">
+
+        <!-- Header -->
+        <header>
+            <div class="header-left">
+                <h2>Structure Comparison</h2>
+                <select id="model-selector">
+                    <!-- Options populated via JS -->
+                </select>
+            </div>
+            <div class="header-right">
+                <div class="legend">
+                    <span>pLDDT Confidence:</span>
+                    <span class="legend-item"><span class="color-box very-high"></span> Very High (>90)</span>
+                    <span class="legend-item"><span class="color-box confident"></span> Confident (90-70)</span>
+                    <span class="legend-item"><span class="color-box low"></span> Low (70-50)</span>
+                    <span class="legend-item"><span class="color-box very-low"></span> Very Low (<50)< /span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content: Two rows stacked -->
+        <div class="comparison-container">
+
+            <!-- Row 1: Test Structure + Test PAE -->
+            <div class="comparison-row">
+                <div class="structure-box">
+                    <h3 class="box-title">Test Structure (Mutation)</h3>
+                    <div class="structure-panel">
+                        <div id="structure-viewer-test" class="structure-viewer"></div>
+                    </div>
+                </div>
+                <div class="pae-box">
+                    <h3 class="box-title">Test PAE</h3>
+                    <div class="pae-panel">
+                        <canvas id="pae-canvas-test"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: Reference Structure + Reference PAE -->
+            <div class="comparison-row">
+                <div class="structure-box">
+                    <h3 class="box-title" id="ref-title">Reference Structure (Healthy)</h3>
+                    <div class="structure-panel">
+                        <div id="structure-viewer-ref" class="structure-viewer"></div>
+                    </div>
+                </div>
+                <div class="pae-box">
+                    <h3 class="box-title">Reference PAE</h3>
+                    <div class="pae-panel">
+                        <canvas id="pae-canvas-ref"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="controls-bar">
+            <button id="reset-view-btn">Reset Selection</button>
+            <button id="compare-btn" style="margin-left: 10px; background-color: #2563eb;">Compare Structures</button>
+            <button id="mutations-btn" style="margin-left: 10px; background-color: #10b981;">🧬 Mutation
+                Analysis</button>
+        </div>
+
+        <!-- Comparison Modal -->
+        <div id="comparison-modal"
+            style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #16213e; padding: 20px; border-radius: 8px; z-index: 9999; max-width: 800px; max-height: 80vh; overflow: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #65CBF3;">Structure Comparison Results</h3>
+                <button id="close-modal-btn"
+                    style="background: #e94560; border: none; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Close</button>
+            </div>
+            <div id="comparison-content"></div>
+        </div>
+        <div id="modal-overlay"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998;">
+        </div>
+
+        <!-- Mutations Modal -->
+        <div id="mutations-modal" class="comparison-modal" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #65CBF3;">Mutation Analysis</h2>
+                <button onclick="closeMutationsModal()"
+                    style="background: #e94560; border: none; color: white; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Close</button>
+            </div>
+            <div id="mutations-content"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>

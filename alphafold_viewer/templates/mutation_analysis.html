@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mutation Analysis | AlphaFold Viewer</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        body {
+            background: #0f0f23;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            background: #16213e;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .page-header h1 {
+            margin: 0;
+            color: #65CBF3;
+            font-size: 1.4rem;
+        }
+
+        .back-btn {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .main-content {
+            padding: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #888;
+        }
+
+        .loading-spinner {
+            font-size: 3rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .verdict-colors-danger {
+            color: #e94560;
+        }
+
+        .verdict-colors-warning {
+            color: #fbbf24;
+        }
+
+        .verdict-colors-success {
+            color: #4ade80;
+        }
+
+        .verdict-colors-secondary {
+            color: #888;
+        }
+
+        .verdict-colors-info {
+            color: #65CBF3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-header">
+        <h1>🧬 Mutation Analysis Pipeline</h1>
+        <button class="back-btn" onclick="goBack()">
+            ← Back to Structure Comparison
+        </button>
+    </div>
+
+    <div class="main-content">
+        <div id="loading" class="loading">
+            <div class="loading-spinner">🔬</div>
+            <div style="margin-top: 20px; font-size: 1.1rem;">Analyzing mutation...</div>
+            <div style="margin-top: 10px; color: #666;">Running AlphaMissense, FoldX, and TM-align</div>
+        </div>
+        <div id="results-container" style="display: none;"></div>
+        <div id="error-container" style="display: none; text-align: center; padding: 60px;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">❌</div>
+            <div id="error-message" style="color: #e94560; font-size: 1.1rem;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Get parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const uniprotId = urlParams.get('uniprot_id');
+        const mutantPath = urlParams.get('mutant_path');
+
+        function goBack() {
+            window.history.back();
+        }
+
+        async function runAnalysis() {
+            if (!uniprotId || !mutantPath) {
+                showError('Missing required parameters. Please go back and try again.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/analyze-mutation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        uniprot_id: uniprotId,
+                        mutant_pdb_path: mutantPath
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'Analysis failed');
+                }
+            } catch (err) {
+                showError('Failed to connect to server: ' + err.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-container').style.display = 'block';
+            document.getElementById('error-message').textContent = message;
+        }
+
+        function displayResults(data) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('results-container').style.display = 'block';
+
+            const verdictColors = {
+                danger: '#e94560',
+                warning: '#fbbf24',
+                success: '#4ade80',
+                secondary: '#888',
+                info: '#65CBF3'
+            };
+
+            const statusColors = {
+                'Active': '#4ade80',
+                'Disabled': '#888',
+                'Error': '#e94560',
+                'Not Installed': '#fbbf24'
+            };
+
+            const verdictColor = verdictColors[data.verdict_class] || '#888';
+            const analysis = data.analysis || {};
+            const scanResults = data.scan_results || {};
+
+            let html = `
+                <div style="background: #0a0a0a; padding: 25px; border-radius: 12px;">
+                    
+                    <!-- HEADER: Mutation Type & Verdict -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #333;">
+                        <div>
+                            <div style="font-size: 0.9rem; color: #888; margin-bottom: 5px;">Analysis Complete</div>
+                            <div style="font-size: 1.8rem; font-weight: bold; color: #fff;">
+                                ${data.mutation_type || 'Unknown'} Mutation
+                            </div>
+                            <div style="margin-top: 10px; color: #aaa; font-size: 0.9rem;">
+                                Pipeline: <span style="color: #65CBF3; font-weight: bold;">${data.pipeline_decision || 'Unknown'}</span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="background: ${verdictColor}30; padding: 15px 30px; border-radius: 8px; border: 2px solid ${verdictColor};">
+                                <div style="font-size: 1.5rem; font-weight: bold; color: ${verdictColor};">${data.verdict || 'UNKNOWN'}</div>
+                                <div style="font-size: 0.8rem; color: #aaa; margin-top: 5px;">${data.verdict_reason || ''}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SCAN RESULTS CARD -->
+                    <div style="background: #1a1a1a; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #65CBF3;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <strong style="color: #65CBF3; font-size: 1.1rem;">📊 Scan Results</strong>
+                            <span style="background: #2a2a2a; padding: 5px 15px; border-radius: 15px; font-size: 0.85rem; color: #fff;">${data.mutation_type || 'Unknown'}</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 15px;">
+                            <div>
+                                <div style="color: #888; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px;">Detected Mutation</div>
+                                <div style="font-family: monospace; font-size: 1.3rem; color: #fff;">${scanResults.detected_mutation || 'None'}</div>
+                            </div>
+                            <div>
+                                <div style="color: #888; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px;">Sequence Identity</div>
+                                <div style="font-family: monospace; font-size: 1.3rem; color: #fff;">${scanResults.sequence_identity || 'N/A'}</div>
+                            </div>
+                            <div>
+                                <div style="color: #888; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px;">WT Length</div>
+                                <div style="font-family: monospace; font-size: 1.3rem; color: #fff;">${scanResults.wt_length || '?'} AA</div>
+                            </div>
+                            <div>
+                                <div style="color: #888; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 5px;">Mutant Length</div>
+                                <div style="font-family: monospace; font-size: 1.3rem; color: #fff;">${scanResults.mut_length || '?'} AA</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CRITICAL FAILURE ALERT -->
+                    ${data.status === 'CRITICAL_FAILURE' || data.pipeline_decision === 'AUTO_FAIL' ? `
+                        <div style="background: #e9456022; padding: 25px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #e94560; text-align: center;">
+                            <div style="font-size: 2.5rem; margin-bottom: 15px;">⚠️</div>
+                            <div style="font-size: 1.3rem; font-weight: bold; color: #e94560; margin-bottom: 10px;">
+                                ${data.mutation_type === 'Frameshift' ? 'READING FRAME DESTROYED' : 'TOXIC AGGREGATION RISK'}
+                            </div>
+                            <div style="color: #ccc; font-size: 1rem; max-width: 600px; margin: 0 auto;">
+                                ${data.mutation_type === 'Frameshift'
+                        ? 'Frameshift mutation scrambles the entire protein sequence after the mutation point. Protein synthesis fails or produces non-functional protein.'
+                        : 'Repeat expansion detected. Large duplications cause protein aggregation (clumping), leading to toxic cellular effects.'}
+                            </div>
+                            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e9456044; color: #888; font-size: 0.85rem;">
+                                All analysis tools disabled - structural comparison not meaningful for this mutation type.
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- TOOL CARDS -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            `;
+
+            // AlphaMissense Card
+            const am = analysis.alphamissense || { active: false, status: 'Unknown' };
+            const amActive = am.active;
+            const amStatusColor = statusColors[am.status] || '#888';
+            const amBorderColor = amActive ? (am.class === 'PATHOGENIC' ? '#e94560' : '#4ade80') : '#444';
+
+            html += `
+                <div style="background: #1a1a1a; padding: 20px; border-radius: 8px; border-top: 4px solid ${amBorderColor}; opacity: ${amActive ? '1' : '0.6'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <strong style="color: #fff; font-size: 1rem;">🧠 AlphaMissense</strong>
+                        <span style="background: ${amStatusColor}30; color: ${amStatusColor}; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem;">${am.status || 'Unknown'}</span>
+                    </div>
+                    ${amActive ? `
+                        <div style="text-align: center; padding: 20px 0;">
+                            <div style="font-size: 2.5rem; font-weight: bold; color: ${amBorderColor};">${am.score !== null && am.score !== undefined ? am.score.toFixed(2) : 'N/A'}</div>
+                            <div style="font-size: 1rem; color: ${amBorderColor}; margin-top: 8px;">${am.verdict || am.class || 'Unknown'}</div>
+                        </div>
+                        <div style="color: #888; font-size: 0.8rem; text-align: center; border-top: 1px solid #333; padding-top: 12px;">${am.reason || ''}</div>
+                    ` : `
+                        <div style="text-align: center; padding: 30px 10px; color: #666;">
+                            <div style="font-size: 0.9rem;">${am.reason || 'Not available'}</div>
+                        </div>
+                    `}
+                </div>
+            `;
+
+            // FoldX Card
+            const fx = analysis.foldx || { active: false, status: 'Unknown' };
+            const fxActive = fx.active;
+            const fxStatusColor = statusColors[fx.status] || '#888';
+            const fxBorderColor = fxActive ? (fx.ddg > 1.6 ? '#e94560' : fx.ddg > 0.5 ? '#fbbf24' : '#4ade80') : '#444';
+
+            html += `
+                <div style="background: #1a1a1a; padding: 20px; border-radius: 8px; border-top: 4px solid ${fxBorderColor}; opacity: ${fxActive ? '1' : '0.6'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <strong style="color: #fff; font-size: 1rem;">🔬 FoldX Stability</strong>
+                        <span style="background: ${fxStatusColor}30; color: ${fxStatusColor}; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem;">${fx.status || 'Unknown'}</span>
+                    </div>
+                    ${fxActive ? `
+                        <div style="text-align: center; padding: 15px 0;">
+                            <div style="font-size: 2rem; font-weight: bold; color: ${fxBorderColor};">ΔΔG: ${fx.ddg !== null && fx.ddg !== undefined ? (fx.ddg > 0 ? '+' : '') + fx.ddg.toFixed(2) : 'N/A'}</div>
+                            <div style="font-size: 0.9rem; color: ${fxBorderColor}; margin-top: 8px;">${fx.stability_verdict || 'Unknown'}</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; padding-top: 12px; border-top: 1px solid #333;">
+                            <div style="text-align: center;">
+                                <div style="color: #888; font-size: 0.7rem;">WT Energy</div>
+                                <div style="font-family: monospace; font-size: 0.95rem; margin-top: 3px;">${fx.energy_wildtype !== null ? fx.energy_wildtype.toFixed(1) : 'N/A'}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="color: #888; font-size: 0.7rem;">Mut Energy</div>
+                                <div style="font-family: monospace; font-size: 0.95rem; margin-top: 3px;">${fx.energy_mutant !== null ? fx.energy_mutant.toFixed(1) : 'N/A'}</div>
+                            </div>
+                        </div>
+                    ` : `
+                        <div style="text-align: center; padding: 30px 10px; color: #666;">
+                            <div style="font-size: 0.9rem;">${fx.reason || 'Not available'}</div>
+                        </div>
+                    `}
+                </div>
+            `;
+
+            // TM-align Card
+            const tm = analysis.tmalign || { active: false, status: 'Unknown' };
+            const tmActive = tm.active;
+            const tmStatusColor = statusColors[tm.status] || '#888';
+            const tmBorderColor = tmActive ? (tm.tm_score >= 0.5 ? '#4ade80' : '#e94560') : '#444';
+
+            html += `
+                <div style="background: #1a1a1a; padding: 20px; border-radius: 8px; border-top: 4px solid ${tmBorderColor}; opacity: ${tmActive ? '1' : '0.6'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <strong style="color: #fff; font-size: 1rem;">📐 TM-align</strong>
+                        <span style="background: ${tmStatusColor}30; color: ${tmStatusColor}; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem;">${tm.status || 'Unknown'}</span>
+                    </div>
+                    ${tmActive ? `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 15px 0;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; font-weight: bold; color: ${tmBorderColor};">${tm.tm_score !== null ? tm.tm_score.toFixed(2) : 'N/A'}</div>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 3px;">TM-score</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 2rem; font-weight: bold; color: #fff;">${tm.rmsd !== null ? tm.rmsd.toFixed(2) : 'N/A'}</div>
+                                <div style="color: #888; font-size: 0.8rem; margin-top: 3px;">RMSD (Å)</div>
+                            </div>
+                        </div>
+                        <div style="color: #888; font-size: 0.8rem; text-align: center; border-top: 1px solid #333; padding-top: 12px;">${tm.structure_verdict || ''}</div>
+                    ` : `
+                        <div style="text-align: center; padding: 30px 10px; color: #666;">
+                            <div style="font-size: 0.9rem;">${tm.reason || 'Not available'}</div>
+                        </div>
+                    `}
+                </div>
+            `;
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('results-container').innerHTML = html;
+        }
+
+        // Run analysis on page load
+        runAnalysis();
+    </script>
+</body>
+
+</html>

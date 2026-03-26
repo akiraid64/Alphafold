@@ -1,0 +1,348 @@
+:root {
+    --bg-color: #1a1a2e;
+    --panel-bg: #16213e;
+    --text-color: #e0e0e0;
+    --accent-color: #0f3460;
+    --highlight-color: #e94560;
+
+    /* pLDDT Colors - AlphaFold exact */
+    --plddt-very-high: #0053D6;
+    /* Deep Blue for >90 */
+    --plddt-confident: #65CBF3;
+    /* Cyan for 70-90 */
+    --plddt-low: #FFDB13;
+    /* Yellow for 50-70 */
+    --plddt-very-low: #FF7D45;
+    /* Orange for <50 */
+    /* Orange for <50 */
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* Access Screen */
+#access-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--bg-color);
+    z-index: 1000;
+}
+
+.access-container {
+    background-color: var(--panel-bg);
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    width: 500px;
+}
+
+#folder-path-input {
+    width: 80%;
+    padding: 10px;
+    margin: 15px 0;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #0f3460;
+    color: white;
+}
+
+#load-btn {
+    padding: 10px 20px;
+    background-color: var(--highlight-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#load-btn:hover {
+    opacity: 0.9;
+}
+
+.error-msg {
+    color: #ff4444;
+    margin-top: 10px;
+    min-height: 20px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Main Layout */
+#main-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+header {
+    height: 60px;
+    background-color: var(--panel-bg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    border-bottom: 1px solid #333;
+}
+
+.header-left {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+select {
+    padding: 5px;
+    border-radius: 4px;
+    background: #0f3460;
+    color: white;
+    border: 1px solid #444;
+}
+
+.legend {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.color-box {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.very-high {
+    background-color: var(--plddt-very-high);
+}
+
+.confident {
+    background-color: var(--plddt-confident);
+}
+
+.low {
+    background-color: var(--plddt-low);
+}
+
+.very-low {
+    background-color: var(--plddt-very-low);
+}
+
+/* Viewer Grid */
+.viewer-grid {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 60px);
+}
+
+.panel {
+    position: relative;
+    overflow: hidden;
+}
+
+.structure-panel {
+    flex: 3;
+    border-right: 1px solid #333;
+}
+
+/* Old .pae-panel removed - see new rules below */
+
+.mol-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    font-size: 12px;
+    display: none;
+    z-index: 100;
+}
+
+/* PAE Canvas */
+.canvas-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    aspect-ratio: 1;
+    background: black;
+    border: 1px solid #333;
+    margin-top: 10px;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: crosshair;
+}
+
+.pae-controls {
+    margin-top: 15px;
+    text-align: center;
+}
+
+#reset-view-btn {
+    padding: 8px 16px;
+    background-color: #333;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#reset-view-btn:hover {
+    background-color: #444;
+}
+
+/* ===== NEW: Comparison Layout Styles ===== */
+
+.input-group {
+    margin: 15px 0;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #8899aa;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background-color: #0f3460;
+    color: white;
+    box-sizing: border-box;
+}
+
+#analyze-btn {
+    padding: 12px 30px;
+    background-color: var(--highlight-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 15px;
+}
+
+#analyze-btn:hover {
+    opacity: 0.9;
+}
+
+.loading-msg {
+    color: #65CBF3;
+    margin-top: 10px;
+    font-style: italic;
+}
+
+/* ===== TWO-ROW HORIZONTAL LAYOUT ===== */
+
+/* Main comparison container */
+.comparison-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 110px);
+    /* header 60px + controls 50px */
+    gap: 10px;
+    padding: 10px;
+    overflow: hidden;
+}
+
+/* Each row: Structure (left) + PAE (right) */
+.comparison-row {
+    display: grid;
+    grid-template-columns: 60% 40%;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
+}
+
+/* Structure box (left side) */
+.structure-box {
+    display: flex;
+    flex-direction: column;
+    background-color: #111;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* PAE box (right side) */
+.pae-box {
+    display: flex;
+    flex-direction: column;
+    background-color: #111;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.box-title {
+    text-align: center;
+    padding: 8px;
+    margin: 0;
+    background-color: #16213e;
+    font-size: 0.9rem;
+    color: #65CBF3;
+}
+
+.structure-box .structure-panel {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.pae-box .pae-panel {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    padding: 10px;
+    overflow: auto;
+}
+
+.pae-box .pae-panel canvas {
+    display: block;
+    cursor: crosshair;
+    width: 405px;
+    height: 405px;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: pixelated;
+}
+
+.controls-bar {
+    display: flex;
+    background-color: var(--panel-bg);
+}
