@@ -91,3 +91,28 @@ Use `alphafold2.ipynb` on Google Colab with ColabFold to generate structure pred
    - Deletions/Insertions: FoldX stability + structural comparison
    - Frameshifts/Duplications: Classification only (tools not applicable)
 4. **Output**: DDG values, pathogenicity scores, RMSD, and a combined risk assessment
+
+## Why This Matters
+
+**No existing open-source tool integrates all three of these analysis methods (AlphaFold2 + FoldX + AlphaMissense) into a single web-based viewer.** Here is how this project differs from existing tools:
+
+| Existing Tool | What It Does | What It's Missing |
+|---|---|---|
+| **Missense3D** | 3D structural analysis of missense variants | No FoldX, no AlphaMissense, uses its own geometric checks only |
+| **ProteinGym** | Benchmarks ~50 variant effect predictors (including FoldX and AlphaMissense) | Not an analysis tool — it's a benchmark dataset, no web viewer |
+| **DynaMut / DynaMut2** | Stability prediction with visualization | Uses its own ENM model (not FoldX), no AlphaMissense |
+| **OpenCRAVAT** | Modular variant annotation framework | Could theoretically add plugins, but no one has built an AlphaFold+FoldX+AlphaMissense integration with 3D viewing |
+| **MutFold** | AlphaFold + FoldX integration | No AlphaMissense, not a polished web platform |
+| **This project** | AlphaFold2 structures + FoldX stability + AlphaMissense pathogenicity + 3D viewer + mutation routing | - |
+
+### Why combining these three specifically is powerful
+
+- **AlphaMissense** (Cheng et al., *Science* 2023) gives an instant pathogenicity score (0-1) for any single amino acid substitution — but it cannot explain *why* a variant is damaging
+- **FoldX** provides the biophysical mechanism — which energy terms are disrupted (van der Waals clashes, solvation, electrostatics) — but it doesn't directly predict clinical pathogenicity
+- **AlphaFold2 3D structures** show *where* the mutation sits (buried core vs. surface vs. active site), which neither score alone conveys
+
+A variant might be flagged "ambiguous" by AlphaMissense while FoldX shows a clear destabilizing DDG > 2 kcal/mol — or vice versa. **Combined multi-evidence interpretation is the direction ACMG clinical guidelines (PP3/BP4 criteria) are moving**, and clinicians currently have to visit 3-5 separate websites to gather this evidence.
+
+### The mutation-type router is an under-addressed problem
+
+Most existing tools handle **only missense (substitution) variants**. AlphaMissense is substitution-only by design. FoldX can handle deletions and insertions but requires different commands. This project's analysis router automatically detects the mutation type and selects the right tool combination — a workflow step that researchers currently do manually.
